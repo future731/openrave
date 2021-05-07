@@ -93,6 +93,16 @@ void PyCollisionReport::init(PyEnvironmentBasePtr pyenv)
     else {
         plink2 = py::none_();
     }
+    if( !!report->pgeominfo1 ) {
+        pgeominfo1 = py::to_object(OPENRAVE_CONST_POINTER_CAST<KinBody::GeometryInfo>(report->pgeominfo1));
+    } else {
+        pgeominfo1 = py::none_();
+    }
+    if( !!report->pgeominfo2 ) {
+        pgeominfo2 = py::to_object(OPENRAVE_CONST_POINTER_CAST<KinBody::GeometryInfo>(report->pgeominfo2));
+    } else {
+        pgeominfo2 = py::none_();
+    }
     py::list newcontacts;
     FOREACH(itc, report->contacts) {
         newcontacts.append(PYCONTACT(*itc));
@@ -764,6 +774,8 @@ void init_openravepy_collisionchecker()
     .def_readonly("options",&PyCollisionReport::options)
     .def_readonly("plink1",&PyCollisionReport::plink1)
     .def_readonly("plink2",&PyCollisionReport::plink2)
+    .def_readonly("pgeominfo1",&PyCollisionReport::pgeominfo1)
+    .def_readonly("pgeominfo2",&PyCollisionReport::pgeominfo2)
     .def_readonly("minDistance",&PyCollisionReport::minDistance)
     .def_readonly("numWithinTol",&PyCollisionReport::numWithinTol)
     .def_readonly("contacts",&PyCollisionReport::contacts)
