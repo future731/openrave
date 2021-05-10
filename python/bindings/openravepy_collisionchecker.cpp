@@ -18,6 +18,7 @@
 #include <openravepy/openravepy_int.h>
 #include <openravepy/openravepy_kinbody.h>
 #include <openravepy/openravepy_environmentbase.h>
+#include <openravepy/openravepy_jointinfo.h>
 #include <openravepy/openravepy_collisionreport.h>
 #include <openravepy/openravepy_collisioncheckerbase.h>
 
@@ -93,13 +94,14 @@ void PyCollisionReport::init(PyEnvironmentBasePtr pyenv)
     else {
         plink2 = py::none_();
     }
+
     if( !!report->pgeominfo1 ) {
-        pgeominfo1 = py::to_object(OPENRAVE_CONST_POINTER_CAST<KinBody::GeometryInfo>(report->pgeominfo1));
+        pgeominfo1 = py::to_object(PyGeometryInfoPtr(new PyGeometryInfo(*report->pgeominfo1)));
     } else {
         pgeominfo1 = py::none_();
     }
     if( !!report->pgeominfo2 ) {
-        pgeominfo2 = py::to_object(OPENRAVE_CONST_POINTER_CAST<KinBody::GeometryInfo>(report->pgeominfo2));
+        pgeominfo2 = py::to_object(PyGeometryInfoPtr(new PyGeometryInfo(*report->pgeominfo2)));
     } else {
         pgeominfo2 = py::none_();
     }

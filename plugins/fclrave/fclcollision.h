@@ -638,6 +638,8 @@ public:
         FCLSpace::KinBodyInfo::LinkInfo objUserData;
 
         CollisionGeometryPtr ctrigeom = _fclspace->GetMeshFactory()(_fclPointsCache, _fclTrianglesCache);
+        // TODO Converting Trimesh into GeometryInfo is desired. be careful with the object lifespan
+        ctrigeom->setUserData(nullptr);
         fcl::CollisionObject ctriobj(ctrigeom);
         //ctriobj.computeAABB(); // necessary?
         ctriobj.setUserData(&objUserData);
@@ -681,6 +683,8 @@ public:
         FCLSpace::KinBodyInfo::LinkInfo objUserData;
 
         CollisionGeometryPtr ctrigeom = _fclspace->GetMeshFactory()(_fclPointsCache, _fclTrianglesCache);
+        // TODO Converting Trimesh into GeometryInfo is desired. be careful with the object lifespan
+        ctrigeom->setUserData(nullptr);
         fcl::CollisionObject ctriobj(ctrigeom);
         //ctriobj.computeAABB(); // necessary?
         ctriobj.setUserData(&objUserData);
@@ -708,6 +712,8 @@ public:
         FCLSpace::KinBodyInfo::LinkInfo objUserData;
 
         CollisionGeometryPtr cboxgeom = make_shared<fcl::Box>(ab.extents.x*2,ab.extents.y*2,ab.extents.z*2);
+        // TODO Converting Trimesh into GeometryInfo is desired. be careful with the object lifespan
+        cboxgeom->setUserData(nullptr);
         fcl::CollisionObject cboxobj(cboxgeom);
 
         fcl::Vec3f newPosition = ConvertVectorToFCL(aabbPose * ab.pos);
@@ -749,6 +755,8 @@ public:
 
         CollisionGeometryPtr cboxgeom = make_shared<fcl::Box>(ab.extents.x*2,ab.extents.y*2,ab.extents.z*2);
         fcl::CollisionObject cboxobj(cboxgeom);
+        // TODO Converting Trimesh into GeometryInfo is desired. be careful with the object lifespan
+        cboxgeom->setUserData(nullptr);
 
         fcl::Vec3f newPosition = ConvertVectorToFCL(aabbPose * ab.pos);
         fcl::Quaternion3f newOrientation = ConvertQuaternionToFCL(aabbPose.rot);
@@ -1048,6 +1056,19 @@ private:
                 _reportcache.plink1 = plink1;
                 _reportcache.plink2 = plink2;
 
+                KinBody::GeometryInfo* pgeominfo1 = static_cast<KinBody::GeometryInfo *>((*o1).collisionGeometry()->getUserData());
+                KinBody::GeometryInfo* pgeominfo2 = static_cast<KinBody::GeometryInfo *>((*o2).collisionGeometry()->getUserData());
+                if ( !!pgeominfo1 ) {
+                    _reportcache.pgeominfo1 = KinBody::GeometryInfoConstPtr(pgeominfo1);
+                } else {
+                    RAVELOG_DEBUG_FORMAT("env=%s, fcl::CollisionObject o1 %x does not have GeometryInfo", GetEnv()->GetNameId()%o1);
+                }
+                if ( !!pgeominfo2 ) {
+                    _reportcache.pgeominfo2 = KinBody::GeometryInfoConstPtr(pgeominfo2);
+                } else {
+                    RAVELOG_DEBUG_FORMAT("env=%s, fcl::CollisionObject o2 %x does not have GeometryInfo", GetEnv()->GetNameId()%o2);
+                }
+
                 // TODO : eliminate the contacts points (insertion sort (std::lower) + binary_search ?) duplicated
                 // How comes that there are duplicated contacts points ?
                 if( _options & (OpenRAVE::CO_Contacts | OpenRAVE::CO_AllGeometryContacts) ) {
@@ -1072,6 +1093,8 @@ private:
 
                 pcb->_report->plink1 = _reportcache.plink1;
                 pcb->_report->plink2 = _reportcache.plink2;
+                pcb->_report->pgeominfo1 = _reportcache.pgeominfo1;
+                pcb->_report->pgeominfo2 = _reportcache.pgeominfo2;
                 if( pcb->_report->contacts.size() == 0) {
                     pcb->_report->contacts.swap(_reportcache.contacts);
                 } else {
@@ -1112,7 +1135,6 @@ private:
 
     bool CheckNarrowPhaseDistance(fcl::CollisionObject *o1, fcl::CollisionObject *o2, CollisionCallbackData* pcb, fcl::FCL_REAL& dist) {
         std::pair<FCLSpace::KinBodyInfo::LinkInfo*, LinkConstPtr> o1info = GetCollisionLink(*o1), o2info = GetCollisionLink(*o2);
-
         if( !o1info.second && !o1info.first ) {
             // o1 is standalone object
             if( _bParentlessCollisionObject && !!o2info.second ) {

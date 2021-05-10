@@ -102,11 +102,14 @@ public:
                     else {
                         RAVELOG_VERBOSE_FORMAT("resetting unknown link col=0x%x", (uint64_t)linkBV.second.get());
                     }
+                    // linkBV.second->collisionGeometry()->setUserData(nullptr); // since we don't need GeometryInfo in linkBV.second.collisionGeometry(), we don't have to erase it
                     linkBV.second->setUserData(nullptr); // reset the user data since someone can hold a ref to the collision object and continue using it
                 }
                 linkBV.second.reset();
 
                 FOREACH(itgeompair, vgeoms) {
+                    // unfortunately collisionGeometry() returns const reference, and getCollisionGeometry() is deprecated.
+                    // (*itgeompair).second->collisionGeometry()->setUserData(nullptr);
                     (*itgeompair).second->setUserData(nullptr);
                     (*itgeompair).second.reset();
                 }
@@ -247,6 +250,7 @@ public:
                     if( !pfclgeom ) {
                         continue;
                     }
+                    pfclgeom->setUserData(pgeominfo.get());
 
                     // We do not set the transformation here and leave it to _Synchronize
                     CollisionObjectPtr pfclcoll = boost::make_shared<fcl::CollisionObject>(pfclgeom);
@@ -266,11 +270,14 @@ public:
                 const std::vector<KinBody::Link::GeometryPtr> & vgeometries = plink->GetGeometries();
                 FOREACH(itgeom, vgeometries) {
                     const KinBody::GeometryInfo& geominfo = (*itgeom)->GetInfo();
+                    // TODO const_cast is dangerous
+                    KinBody::GeometryInfo& rawref_geominfo = const_cast<KinBody::GeometryInfo&>(geominfo);
                     const CollisionGeometryPtr pfclgeom = _CreateFCLGeomFromGeometryInfo(_meshFactory, geominfo);
 
                     if( !pfclgeom ) {
                         continue;
                     }
+                    pfclgeom->setUserData(&rawref_geominfo);
 
                     // We do not set the transformation here and leave it to _Synchronize
                     CollisionObjectPtr pfclcoll = boost::make_shared<fcl::CollisionObject>(pfclgeom);
